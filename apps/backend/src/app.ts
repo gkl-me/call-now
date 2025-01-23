@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import http from 'http';
 import { Server } from 'socket.io';
 import { UserManager } from './managers/UserManager';
+import cors from 'cors';
 
 
 
@@ -15,6 +16,7 @@ const io = new Server(server,{
     origin:"*"
   }
 })
+app.use(cors())
 
 const userManager = new UserManager()
 

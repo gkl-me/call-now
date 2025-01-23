@@ -21,30 +21,34 @@ export class RoomManager {
 
         this.setupMessageListeners(roomId, user1, user2);
 
-        user1.socket.emit('connected:user', { name:user2.name});
-        user2.socket.emit('connected:user', { name:user1.name});
+        user1.socket.emit('connected:user', { name:user2.name,userId:user2.socket.id});
+        user2.socket.emit('connected:user', { name:user1.name,userId:user1.socket.id});
     }
 
     private setupMessageListeners(roomId: string, user1: User, user2: User) {
-        // Broadcast message from one user to the other in the same room
+
         user1.socket.on('send:message', (content: string) => {
           user2.socket.emit('message', {
-            name: user1.name,
+            name:user1.name,
+            userId: user1.socket.id,
             content
           });
           user1.socket.emit('message', {
-            name: user1.name,
+            name:user1.name,
+            userId: user1.socket.id,
             content
           });
         });
     
         user2.socket.on('send:message', (content: string) => {
           user1.socket.emit('message', {
-            name: user2.name ,
+            name:user2.name,
+            userId: user2.socket.id,
             content
           });
           user2.socket.emit('message', {
-            name: user2.name,
+            name:user2.name,
+            userId: user2.socket.id,
             content
           });
         });
