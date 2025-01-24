@@ -1,16 +1,7 @@
 import { useEffect, useState } from "react";
 import { connectSocket, disconnectSocket, getSocket } from "../socket";
+import { Message, ConnectedUser } from "@repo/types/src/index";
 
-interface Message {
-  name: string;
-  userId: string;
-  content: string;
-}
-
-interface ConnectedUser {
-  name: string;
-  userId: string;
-}
 
 export default function Room({ name }: { name: string }) {
   const [connectState, setConnectState] = useState<string>("idle");

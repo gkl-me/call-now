@@ -16,3 +16,13 @@ export interface Message{
 }
 
 
+export interface Message {
+    name: string;
+    userId: string;
+    content: string;
+  }
+  
+export interface ConnectedUser {
+    name: string;
+    userId: string;
+  }

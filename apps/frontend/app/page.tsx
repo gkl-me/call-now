@@ -12,7 +12,7 @@ export default function Home(){
 
   useEffect(() => {
     async function getCount(){
-      const count = await axios.get('http://localhost:8000/')
+      const count = await axios.get(process.env.NEXT_PUBLIC_BACKEND!)
       setUserCount(count.data.totalUsers)
     }
     getCount()
@@ -34,6 +34,7 @@ export default function Home(){
               onChange={(e) => setName(e.target.value)} 
               placeholder="Your name"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onKeyDown={(e) => e.key=='Enter' && setJoined(true) }
             />
           </div>
           <button 
