@@ -12,7 +12,7 @@ export default function Home(){
 
   useEffect(() => {
     async function getCount(){
-      const count = await axios.get(process.env.NEXT_PUBLIC_BACKEND!)
+      const count = await axios.get(process.env.NEXT_PUBLIC_BACKEND || "http://localhost:3001" )
       setUserCount(count.data.totalUsers)
     }
     getCount()
