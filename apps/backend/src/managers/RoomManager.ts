@@ -27,29 +27,33 @@ export class RoomManager {
 
     private setupMessageListeners(roomId: string, user1: User, user2: User) {
 
-        user1.socket.on('send:message', (content: string) => {
+        user1.socket.on('send:message', ({content,timestamp}:{content: string,timestamp:Date}) => {
           user2.socket.emit('message', {
             name:user1.name,
             userId: user1.socket.id,
-            content
+            content,
+            timestamp
           });
           user1.socket.emit('message', {
             name:user1.name,
             userId: user1.socket.id,
-            content
+            content,
+            timestamp
           });
         });
     
-        user2.socket.on('send:message', (content: string) => {
+        user2.socket.on('send:message',  ({content,timestamp}:{content: string,timestamp:Date}) => {
           user1.socket.emit('message', {
             name:user2.name,
             userId: user2.socket.id,
-            content
+            content,
+            timestamp
           });
           user2.socket.emit('message', {
             name:user2.name,
             userId: user2.socket.id,
-            content
+            content,
+            timestamp
           });
         });
     }

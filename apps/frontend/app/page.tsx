@@ -1,54 +1,141 @@
 'use client'
 
-import { useEffect, useState } from "react"
-import Room from "../components/Room"
-import axios from "axios"
+import { useEffect, useState } from "react";
+import { connectSocket, disconnectSocket, getSocket } from "../socket";
+import { Message, ConnectedUser } from "@repo/types/src/index";
+import { LandingPage } from "../components/LandingPage";
+import { Loading } from "../components/Loading";
+import { ChatRoom } from "../components/ChatRoom";
+// import axios from "axios";
 
-export default function Home(){
-
-  const [joined,setJoined] = useState(false)
-  const [name,setName] = useState('')
-  const [userCount,setUserCount] = useState(0)
+export default function Home() {
+  const [username, setUsername] = useState("");
+  const [joinedChat, setJoinedChat] = useState(false);
+  const [connectState, setConnectState] = useState<string>("idle");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [connectedTo, setConnectedTo] = useState<ConnectedUser | null>(null);
+  const [skipConfirm, setSkipConfirm] = useState(false);
   
+  function handleStart() {
+    if (username.trim()) {
+      const existingSocket = getSocket();
+      if (existingSocket) {
+        existingSocket.removeAllListeners();
+        disconnectSocket();
+      }
+      setJoinedChat(true);
+      newChat();
+    }
+  }
+
+
+  function newChat() {
+    const socket = connectSocket();
+    socket.removeAllListeners();
+    socket.emit("addUser", { name: username });
+
+    socket.on("waiting for user", () => {
+      setConnectState("waiting");
+    });
+
+    socket.on("connected:user", (user) => {
+      setConnectState("connected");
+      setConnectedTo(user);
+    });
+
+    socket.on("disconnected:user", () => {
+      setConnectState("idle");
+      setMessages([]);
+      setConnectedTo(null);
+      setJoinedChat(false);
+    });
+
+    socket.on("message", (message: Message) => {
+      const formattedTime = new Date(message.timestamp).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      setMessages((prev) => [...prev, {...message,timestamp:formattedTime}]);
+    });
+  }
+
+  function handleSkip() {
+    if (skipConfirm) {
+      disconnectSocket();
+      setMessages([]);
+      setConnectedTo(null);
+      handleStart();
+      setSkipConfirm(false);
+    } else {
+      setSkipConfirm(true);
+    }
+  }
+
+  function stopChat() {
+    const socket = getSocket();
+    if (socket) {
+      disconnectSocket();
+      setConnectState("idle");
+      setMessages([]);
+      setConnectedTo(null);
+      setJoinedChat(false)
+    }
+  }
+
+  function sendMessage() {
+    const socket = getSocket();
+    if (socket && currentMessage.trim()) {
+      socket.emit("send:message", { content: currentMessage, timestamp: new Date() });
+      setCurrentMessage("");
+    }
+  }
 
   useEffect(() => {
-    async function getCount(){
-      const count = await axios.get(process.env.NEXT_PUBLIC_BACKEND || "http://localhost:3001" )
-      setUserCount(count.data.totalUsers)
-    }
-    getCount()
-  },[])
+    return () => {
+      if (joinedChat) {
+        disconnectSocket();
+        setConnectState("idle");
+        setMessages([]);
+        setConnectedTo(null);
+        setJoinedChat(false);
+        setUsername("");
+      }
+    };
+  }, []);
 
-  return (
-    !joined ? (
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center px-4 py-6">
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-md">
-          <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4 sm:mb-6">Call Now</h1>
-          <h3 className="text-md sm:text-lg font-semibold text-center text-green-500 mb-4 sm:mb-6">Active Users: {userCount}</h3>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
-              Enter Your Name
-            </label>
-            <input 
-              type="text" 
-              value={name}
-              onChange={(e) => setName(e.target.value)} 
-              placeholder="Your name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onKeyDown={(e) => e.key=='Enter' && setJoined(true) }
-            />
-          </div>
-          <button 
-            onClick={() => setJoined(true)} 
-            disabled={!name}
-            className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300 disabled:bg-gray-400"
-          >
-            Start Chat
-          </button>
-        </div>
-      </div>
-    ) : (
-      <Room name={name} />
-    )
-  )
+  // Show landing page if not joined
+  if (!joinedChat) {
+    return (
+      <LandingPage
+        username={username}
+        setUsername={setUsername}
+        onStart={handleStart}
+      />
+    );
+  }
+
+  // Show loading screen while waiting for connection
+  if (connectState === "waiting") {
+    return <Loading />;
+  }
+
+  // Show chat room when connected
+  if (connectState === "connected") {
+    return (
+      <ChatRoom
+        connectedTo={connectedTo}
+        message={currentMessage}
+        setMessage={setCurrentMessage}
+        skipConfirm={skipConfirm}
+        onSkip={handleSkip}
+        onStop={stopChat}
+        messages={messages}
+        onSendMessage={sendMessage}
+      />
+    );
+  }
+
+  // Default to loading screen
+  return <Loading />;
 }
