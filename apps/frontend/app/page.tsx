@@ -9,6 +9,7 @@ export default function Home(){
   const [joined,setJoined] = useState(false)
   const [name,setName] = useState('')
   const [userCount,setUserCount] = useState(0)
+  
 
   useEffect(() => {
     async function getCount(){
