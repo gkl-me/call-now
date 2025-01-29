@@ -20,6 +20,7 @@ export interface Message {
     name: string;
     userId: string;
     content: string;
+    timestamp:Date|string;
   }
   
 export interface ConnectedUser {
