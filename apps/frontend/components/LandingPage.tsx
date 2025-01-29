@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {  useEffect, useState } from 'react';
 import { MessageCircle, Users } from 'lucide-react';
+import axios from 'axios';
 
 interface LandingPageProps {
   username: string;
@@ -8,6 +9,19 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ username, setUsername, onStart }: LandingPageProps) {
+
+   const [userCount,setUserCount] = useState(0);
+
+   useEffect(() => {
+    const fetchUserCount = async () => {
+      const response = await axios.get(process.env.NEXT_PUBLIC_BACKEND || "http://localhost:3001");
+      const data = response.data.totalUsers;
+      setUserCount(data);
+    };
+
+    fetchUserCount();
+   },[])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
@@ -24,7 +38,7 @@ export function LandingPage({ username, setUsername, onStart }: LandingPageProps
           <Users className="w-5 h-5 text-indigo-600" />
           <span className="text-indigo-600 font-medium">
             {/* Simulated random number between 50-200 */}
-            {Math.floor(Math.random() * (200 - 50 + 1) + 50)} users online
+            {userCount} users online
           </span>
         </div>
         <div className="space-y-4">
